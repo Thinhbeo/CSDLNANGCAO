@@ -1,0 +1,67 @@
+Câu 3. Thực hiện các câu truy vấn trên cơ sở dữ liệu NganHang
+1. Tìm tên tất cả các ngân hàng có chi nhánh ngân hàng ở thanh phố “Da Lat”.
+select distinct n.tennh from NGANHANG n join CHINHANH c on n.manh = c.manh where c.thanhphocn = 'DA LAT';
+
+2. Tìm tất cả những thành phố mà có chi nhánh của ngân hàng công thương.
+select distinct c.thanhphocn from CHINHANH c join NGANHANG n on c.manh = n.manh where n.tennh = 'NGAN HANG CONG THUONG';
+
+3. Tìm thông tin về tất cả các chi nhánh của ngân hàng công thương có địa điểm ở TPHCM.
+select c.* from CHINHANH c join NGANHANG n on c.manh = n.manh where n.tennh = 'NGAN HANG CONG THUONG' and c.thanhphocn = 'TP HCM';
+
+4. Xuất thông tin từng ngân hàng và chi nhánh của nó.
+select n.tennh, c.* from NGANHANG n left join CHINHANH c on n.manh = c.manh;
+
+5. Tìm khách hàng mà địa chỉ của họ ở 'Ha Noi'.
+select * from KHACHHANG where diachi like '%HA NOI%';
+
+6. Tìm các khách hàng có tên Son.
+select * from KHACHHANG where tenkh like '% SON';
+
+7. Tìm các khách hàng mà địa chỉ của họ ở đường "Tran Hung Dao".
+select * from KHACHHANG where diachi like '%TRAN HUNG DAO%';
+
+8. Tìm các khách hàng có tên "Thao".
+select * from KHACHHANG where tenkh like '% THAO';
+
+9. Tìm khách hàng có mã số bắt đầu là '11' và ở TP HCM.
+select * from KHACHHANG where makh like '11%' and diachi like '%TP HCM%';
+
+10. Xuất thông tin về tên ngân hàng, thành phố chi nhánh và tài sản theo thứ tự tăng
+của tài sản của chi nhánh, nếu tài sản trùng nhau thì sắp tăng theo thành phố chi nhánh.
+select n.tennh, c.thanhphocn, c.taisan from NGANHANG n join CHINHANH c on n.manh = c.manh order by c.taisan asc, c.thanhphocn asc;
+
+11. Tìm thông tin tất cả những thông tin về ngân hàng và chi nhánh ngân hàng mà tài
+sản 3000000000 < tài sản < 5000000000.
+select n.tennh, c.* from NGANHANG n join CHINHANH c on n.manh = c.manh where c.taisan > 3000000000 and c.taisan < 5000000000;
+
+12. Cho biết tài sản trung bình chi nhánh của từng ngân hàng.
+select manh, avg(taisan) as taisantrungbinh from CHINHANH group by manh;
+
+13. Tìm thông tin của khách hàng có tài khoản vay tại ngân hàng công thương và có
+tên là 'Thao'.
+select distinct k.* from KHACHHANG k join TAIKHOANVAY v on k.makh = v.makh join CHINHANH c on v.macn = c.macn join NGANHANG n on c.manh = n.manh where n.tennh = 'NGAN HANG CONG THUONG' and k.tenkh like '% THAO';
+
+14. Xuất thông tin về tên ngân hàng và tổng tài sản của các ngân hàng.
+select n.tennh, sum(c.taisan) as tongtaisan from NGANHANG n join CHINHANH c on n.manh = c.manh group by n.tennh;
+
+15. Tìm MaCN và TaiSan của chi nhánh có tài sản lớn nhất.
+select macn, taisan from CHINHANH where taisan = (select max(taisan) from CHINHANh);
+
+16. Liệt kê tất cả những những khách hành có tài khoản gởi tại chi nhánh ngân hàng
+“A Chau”.
+select distinct k.* from KHACHHANG k join TAIKHOANGOI g on k.makh = g.makh join CHINHANH c on g.macn = c.macn join NGANHANG n on c.manh = n.manh where n.tennh = 'NGAN HANG A CHAU';
+
+17. Tìm tất cả các số tài khoản vay thực hiện tại chi nhánh của ngân hàng ngoại
+thương mà số tiền vay > 1200000.
+select v.sotkv from TAIKHOANVAY v join CHINHANH c on v.macn = c.macn join NGANHANG n on c.manh = n.manh where n.tennh = 'NGAN HANG NGOAI THUONG' and v.sotienvay > 1200000;
+
+18. Tính tổng số tiền mà mỗi chi nhánh ngân hàng đang được khách hàng gởi.
+select macn, sum(sotiengoi) as tonggoi from TAIKHOANGOI group by macn;
+
+19. Xuất thông tin về tài khoản vay và tài khoản gởi hiện có của tất cả các khách hàng
+có tên là 'Son'.
+select k.tenkh, v.sotkv, v.sotienvay, g.sotkg, g.sotiengoi from KHACHHANG k left join TAIKHOANVAY v on k.makh = v.makh left join TAIKHOANGOI g on k.makh = g.makh where k.tenkh like '% SON';
+
+20. Tìm thông tin về khách hàng có tổng số tiền vay tại tất cả các ngân hàng >
+30000000.
+select makh, sum(sotienvay) from TAIKHOANVAY group by makh having sum(sotienvay) > 30000000;
