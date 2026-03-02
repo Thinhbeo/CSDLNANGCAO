@@ -1,0 +1,431 @@
+
+CREATE TABLE KHOA (
+    Makhoa VARCHAR2(10) PRIMARY KEY,
+    Tenkhoa NVARCHAR2(100),
+    Dienthoai VARCHAR2(15)
+);
+
+CREATE TABLE LOP (
+    Malop VARCHAR2(10) PRIMARY KEY,
+    Tenlop NVARCHAR2(100),
+    Khoa NUMBER,
+    Hedt NVARCHAR2(50),
+    Namnhaphoc NUMBER,
+    Makhoa VARCHAR2(10)
+);
+
+INSERT INTO KHOA (Makhoa, Tenkhoa, Dienthoai) 
+VALUES ('CNTT', 'Công nghệ thông tin', '0123456789');
+
+
+COMMIT;
+
+SET SERVEROUTPUT ON;
+
+CREATE OR REPLACE PROCEDURE SP_ThemKhoa(
+     p_makhoa IN VARCHAR2,
+     p_tenkhoa IN VARCHAR2,
+     p_dienthoai IN NUMBER
+) AS 
+        v_count NUMBER;
+BEGIN
+
+        SELECT COUNT(*) INTO v_count
+        FROM KHOA
+        WHERE Tenkhoa = p_tenkhoa;
+        
+        IF v_count > 0 THEN
+
+            DBMS_OUTPUT.PUT_LINE('Khoa ' || p_tenkhoa || ' da ton tai');
+        ELSE 
+
+            INSERT INTO KHOA(Makhoa, Tenkhoa, Dienthoai)
+            VALUES (p_makhoa, p_tenkhoa, p_dienthoai);
+            
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE('Them thanh cong ');
+        END IF;
+        
+END sp_ThemKhoa;
+
+
+EXEC sp_ThemKhoa('CNTT2', 'Công nghệ thông tin', '0987654321');
+
+EXEC sp_ThemKhoa('KT', 'Kinh tế', '0909123456');
+
+
+CREATE OR REPLACE PROCEDURE SP_ThemLop (
+    p_malop IN VARCHAR2,
+    p_tenlop IN VARCHAR2,
+    p_khoa IN NUMBER,
+    p_hedt IN VARCHAR2,
+    p_namnhaphoc IN NUMBER,
+    p_makhoa IN VARCHAR2
+) AS 
+    v_count_lop NUMBER;
+    v_count_khoa NUMBER;
+BEGIN
+
+    SELECT COUNT(*) INTO v_count_lop
+    FROM LOP
+    WHERE Tenlop = p_tenlop;
+    
+
+    SELECT COUNT(*) INTO v_count_khoa
+    FROM KHOA
+    WHERE Makhoa = p_makhoa;
+
+
+    IF v_count_lop > 0 THEN
+
+        DBMS_OUTPUT.PUT_LINE('Lỗi: Ten lop "' || p_tenlop || '" da ton tai.');
+        
+    ELSIF v_count_khoa = 0 THEN
+
+        DBMS_OUTPUT.PUT_LINE('Lỗi: Ma khoa "' || p_makhoa || '" khong ton tai.');
+        
+    ELSE
+
+        INSERT INTO LOP (Malop, Tenlop, Khoa, Hedt, Namnhaphoc, Makhoa)
+        VALUES (p_malop, p_tenlop, p_khoa, p_hedt, p_namnhaphoc, p_makhoa);
+        
+        COMMIT;
+        DBMS_OUTPUT.PUT_LINE('Thành công.');
+    END IF;
+    
+END SP_ThemLop;
+
+EXEC SP_ThemLop('L01', 'KTPM K15', 15, 'Đại học chính quy', 2020, 'CNTT');
+
+
+EXEC SP_ThemLop('L01', 'KTPM K15', 15, 'Đại học chính quy', 2020, 'CNTT');
+
+
+EXEC SP_ThemLop('L03', 'Ngôn ngữ Anh K15', 15, 'Đại học chính quy', 2020, 'NN');
+
+CREATE OR REPLACE PROCEDURE SP_ThemKhoa2 (
+    p_makhoa IN VARCHAR2,
+    p_tenkhoa IN VARCHAR2,
+    p_dienthoai IN VARCHAR2,
+    p_ketqua OUT NUMBER
+) AS 
+    v_count NUMBER;
+BEGIN
+
+    SELECT COUNT(*) INTO v_count
+    FROM KHOA
+    WHERE Tenkhoa = p_tenkhoa;
+    
+    IF v_count > 0 THEN
+
+        p_ketqua := 0;
+    ELSE
+
+        INSERT INTO KHOA (Makhoa, Tenkhoa, Dienthoai)
+        VALUES (p_makhoa, p_tenkhoa, p_dienthoai);
+        
+        COMMIT;
+        p_ketqua := 1; 
+    END IF;
+    
+END SP_ThemKhoa2;
+
+DECLARE
+    v_kq NUMBER;
+BEGIN
+
+    SP_ThemKhoa2('CNTT3', 'Công nghệ thông tin', '0123', v_kq);
+    DBMS_OUTPUT.PUT_LINE(v_kq); 
+
+
+    SP_ThemKhoa2('DT', 'Điện tử viễn thông', '09881111111', v_kq);
+    DBMS_OUTPUT.PUT_LINE(v_kq); 
+
+END;
+
+SELECT * FROM KHOA;
+
+CREATE OR REPLACE PROCEDURE SP_ThemLop2 (
+    p_malop IN VARCHAR2,
+    p_tenlop IN VARCHAR2,
+    p_khoa IN NUMBER,
+    p_hedt IN VARCHAR2,
+    p_namnhaphoc IN NUMBER,
+    p_makhoa IN VARCHAR2,
+    p_ketqua OUT NUMBER 
+) AS 
+    v_count NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_count FROM LOP WHERE Tenlop = p_tenlop;
+    IF v_count > 0 THEN
+        p_ketqua := 0;
+        RETURN;
+    END IF;
+
+    SELECT COUNT(*) INTO v_count FROM KHOA WHERE Makhoa = p_makhoa;
+    IF v_count = 0 THEN
+        p_ketqua := 1; 
+        RETURN;        
+    END IF;
+
+    INSERT INTO LOP (Malop, Tenlop, Khoa, Hedt, Namnhaphoc, Makhoa)
+    VALUES (p_malop, p_tenlop, p_khoa, p_hedt, p_namnhaphoc, p_makhoa);
+    
+    COMMIT;
+    p_ketqua := 2;
+    
+END SP_ThemLop2;
+
+DECLARE
+    v_kq NUMBER;
+BEGIN
+
+    SP_ThemLop2('L10', 'KTPM K15', 15, 'ĐH', 2020, 'CNTT', v_kq);
+    DBMS_OUTPUT.PUT_LINE('Trung ten lop: ' || v_kq);
+
+
+    SP_ThemLop2('L11', 'Mạng máy tính K15', 15, 'ĐH', 2020, 'Mã_Sai', v_kq);
+    DBMS_OUTPUT.PUT_LINE('Ma sai: ' || v_kq);
+
+
+    SP_ThemLop2('L12', 'An toàn thông tin K15', 15, 'ĐH', 2020, 'CNTT', v_kq);
+    DBMS_OUTPUT.PUT_LINE('Hop le: ' || v_kq);
+END;
+    
+
+CREATE TABLE tblChucVu (
+    MaCV VARCHAR2(10) PRIMARY KEY,
+    TenCV NVARCHAR2(100)
+);
+
+CREATE TABLE tblNhanVien (
+    MaNV VARCHAR2(10) PRIMARY KEY,
+    MaCV VARCHAR2(10),
+    TenNV NVARCHAR2(100),
+    NgaySinh DATE,
+    LuongCanBan NUMBER,
+    NgayCong NUMBER,
+    PhuCap NUMBER,
+    CONSTRAINT FK_NV_CV FOREIGN KEY (MaCV) REFERENCES tblChucVu(MaCV)
+);
+
+
+INSERT INTO tblChucVu VALUES ('GD', 'Giám đốc');
+INSERT INTO tblChucVu VALUES ('PGD', 'Phó giám đốc');
+INSERT INTO tblChucVu VALUES ('TP', 'Trưởng phòng');
+INSERT INTO tblChucVu VALUES ('NV', 'Nhân viên');
+
+
+INSERT INTO tblNhanVien VALUES ('NV01', 'GD', 'Nguyễn Văn A', TO_DATE('1980-01-15', 'YYYY-MM-DD'), 500000, 26, 2000000);
+INSERT INTO tblNhanVien VALUES ('NV02', 'TP', 'Trần Thị B', TO_DATE('1985-08-20', 'YYYY-MM-DD'), 300000, 24, 1000000);
+INSERT INTO tblNhanVien VALUES ('NV03', 'NV', 'Lê Văn C', TO_DATE('1995-12-05', 'YYYY-MM-DD'), 200000, 25, 500000);
+
+COMMIT;
+CREATE OR REPLACE PROCEDURE SP_Them_Nhan_Vien (
+    p_MaNV IN VARCHAR2,
+    p_MaCV IN VARCHAR2,
+    p_TenNV IN VARCHAR2,
+    p_NgaySinh IN DATE,
+    p_LuongCanBan IN NUMBER,
+    p_NgayCong IN NUMBER,
+    p_PhuCap IN NUMBER
+) AS 
+    v_count_cv NUMBER;
+    v_count_nv NUMBER;
+BEGIN
+
+    SELECT COUNT(*) INTO v_count_nv FROM tblNhanVien WHERE MaNV = p_MaNV;
+    
+    IF v_count_nv > 0 THEN
+
+        DBMS_OUTPUT.PUT_LINE( p_MaNV || '" da ton tai.');
+        RETURN; 
+    END IF;
+
+
+    SELECT COUNT(*) INTO v_count_cv FROM tblChucVu WHERE MaCV = p_MaCV;
+    
+    IF v_count_cv > 0 THEN
+
+        INSERT INTO tblNhanVien (MaNV, MaCV, TenNV, NgaySinh, LuongCanBan, NgayCong, PhuCap)
+        VALUES (p_MaNV, p_MaCV, p_TenNV, p_NgaySinh, p_LuongCanBan, p_NgayCong, p_PhuCap);
+        
+        COMMIT;
+        DBMS_OUTPUT.PUT_LINE('Da them nhan vien ' || p_TenNV);
+    ELSE
+        DBMS_OUTPUT.PUT_LINE( p_MaCV || '"khong ton tai.');
+    END IF;
+    
+END SP_Them_Nhan_Vien;
+
+
+CREATE OR REPLACE PROCEDURE SP_CapNhat_Nhan_Vien (
+    p_MaNV IN VARCHAR2,
+    p_MaCV IN VARCHAR2,
+    p_TenNV IN VARCHAR2,
+    p_NgaySinh IN DATE,
+    p_LuongCanBan IN NUMBER,
+    p_NgayCong IN NUMBER,
+    p_PhuCap IN NUMBER
+) AS 
+    v_count_cv NUMBER;
+BEGIN
+
+    SELECT COUNT(*) INTO v_count_cv FROM tblChucVu WHERE MaCV = p_MaCV;
+    
+    IF v_count_cv > 0 THEN
+
+        UPDATE tblNhanVien
+        SET MaCV = p_MaCV,
+            TenNV = p_TenNV,
+            NgaySinh = p_NgaySinh,
+            LuongCanBan = p_LuongCanBan,
+            NgayCong = p_NgayCong,
+            PhuCap = p_PhuCap
+        WHERE MaNV = p_MaNV;
+        
+
+        IF SQL%ROWCOUNT > 0 THEN
+            COMMIT;
+            DBMS_OUTPUT.PUT_LINE('Da cap nhat thong tin cho nhan vien' || p_MaNV);
+        ELSE
+            DBMS_OUTPUT.PUT_LINE('Khong tim thay nhan vien "' || p_MaNV || '".');
+        END IF;
+    ELSE
+        DBMS_OUTPUT.PUT_LINE( p_MaCV || '"khong ton tai.');
+    END IF;
+END SP_CapNhat_Nhan_Vien;
+
+
+CREATE OR REPLACE PROCEDURE SP_LuongLN AS 
+    v_Luong NUMBER;
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('----- BẢNG LƯƠNG NHÂN VIÊN -----');
+    DBMS_OUTPUT.PUT_LINE('--------------------------------');
+    
+    -- Duyệt qua từng dòng trong bảng tblNhanVien
+    FOR rec IN (SELECT MaNV, TenNV, LuongCanBan, NgayCong, PhuCap FROM tblNhanVien) 
+    LOOP
+        -- lương = (lương căn bản * ngày công) + phụ cấp
+        v_Luong := (rec.LuongCanBan * rec.NgayCong) + rec.PhuCap;
+        
+        DBMS_OUTPUT.PUT_LINE('Mã NV: ' || rec.MaNV || 
+                             ' | Tên: ' || rec.TenNV || 
+                             ' | Lương: ' || TO_CHAR(v_Luong, '999,999,999') || ' VNĐ');
+    END LOOP;
+    
+    DBMS_OUTPUT.PUT_LINE('--------------------------------');
+END SP_LuongLN;
+
+
+SET SERVEROUTPUT ON;
+
+
+EXEC SP_Them_Nhan_Vien('NV05', 'NV', 'Phạm Thị E', TO_DATE('1998-02-14', 'YYYY-MM-DD'), 200000, 22, 500000);
+
+
+EXEC SP_CapNhat_Nhan_Vien('NV04', 'TP', 'Phạm Thị D', TO_DATE('1998-02-14', 'YYYY-MM-DD'), 300000, 24, 1000000);
+
+
+EXEC SP_LuongLN;
+
+
+CREATE OR REPLACE PROCEDURE sp_them_nhan_vien1 (
+    p_MaNV IN VARCHAR2,
+    p_MaCV IN VARCHAR2,
+    p_TenNV IN NVARCHAR2,
+    p_NgaySinh IN DATE,
+    p_LuongCB IN NUMBER,
+    p_NgayCong IN NUMBER,
+    p_PhuCap IN NUMBER,
+    p_KetQua OUT NUMBER
+) AS 
+    v_count_cv NUMBER;
+BEGIN
+
+    SELECT COUNT(*) INTO v_count_cv FROM tblChucVu WHERE MaCV = p_MaCV;
+    
+    IF v_count_cv = 0 THEN
+        p_KetQua := 0;
+    ELSE
+
+        INSERT INTO tblNhanVien (MaNV, MaCV, TenNV, NgaySinh, LuongCanBan, NgayCong, PhuCap)
+        VALUES (p_MaNV, p_MaCV, p_TenNV, p_NgaySinh, p_LuongCB, p_NgayCong, p_PhuCap);
+        
+        COMMIT;
+        p_KetQua := 1; 
+    END IF;
+END sp_them_nhan_vien1;
+
+CREATE OR REPLACE PROCEDURE sp_them_nhan_vien2 (
+    p_MaNV IN VARCHAR2,
+    p_MaCV IN VARCHAR2,
+    p_TenNV IN NVARCHAR2,
+    p_NgaySinh IN DATE,
+    p_LuongCB IN NUMBER,
+    p_NgayCong IN NUMBER,
+    p_PhuCap IN NUMBER,
+    p_KetQua OUT NUMBER
+) AS 
+    v_count_nv NUMBER;
+    v_count_cv NUMBER;
+BEGIN
+
+    SELECT COUNT(*) INTO v_count_nv FROM tblNhanVien WHERE MaNV = p_MaNV;
+    IF v_count_nv > 0 THEN
+        p_KetQua := 0; 
+        RETURN;    
+    END IF;
+
+    SELECT COUNT(*) INTO v_count_cv FROM tblChucVu WHERE MaCV = p_MaCV;
+    IF v_count_cv = 0 THEN
+        p_KetQua := 1; 
+        RETURN;      
+    END IF;
+
+    INSERT INTO tblNhanVien (MaNV, MaCV, TenNV, NgaySinh, LuongCanBan, NgayCong, PhuCap)
+    VALUES (p_MaNV, p_MaCV, p_TenNV, p_NgaySinh, p_LuongCB, p_NgayCong, p_PhuCap);
+    
+    COMMIT;
+    p_KetQua := 2;
+    
+END sp_them_nhan_vien2;
+
+
+CREATE OR REPLACE PROCEDURE sp_capnhat_ngaysinh (
+    p_MaNV IN VARCHAR2,
+    p_NgaySinh IN DATE,
+    p_KetQua OUT NUMBER
+) AS 
+BEGIN
+    UPDATE tblNhanVien
+    SET NgaySinh = p_NgaySinh
+    WHERE MaNV = p_MaNV;
+
+    IF SQL%ROWCOUNT = 0 THEN
+        p_KetQua := 0;
+    ELSE
+        COMMIT;
+        p_KetQua := 1;
+    END IF;
+    
+END sp_capnhat_ngaysinh;
+
+
+DECLARE
+    v_ketqua NUMBER;
+BEGIN
+
+    sp_them_nhan_vien2('NV99', 'NV', 'Nguyễn Văn Test', TO_DATE('1999-01-01', 'YYYY-MM-DD'), 100000, 20, 0, v_ketqua);
+    DBMS_OUTPUT.PUT_LINE(v_ketqua);
+    
+    sp_them_nhan_vien2('NV99', 'NV', 'Nguyễn Văn Test 2', TO_DATE('1999-01-01', 'YYYY-MM-DD'), 100000, 20, 0, v_ketqua);
+    DBMS_OUTPUT.PUT_LINE(v_ketqua);
+
+    sp_capnhat_ngaysinh('NV99', TO_DATE('2000-12-12', 'YYYY-MM-DD'), v_ketqua);
+    DBMS_OUTPUT.PUT_LINE(v_ketqua);
+    
+
+    sp_capnhat_ngaysinh('NV_SAI', TO_DATE('2000-12-12', 'YYYY-MM-DD'), v_ketqua);
+    DBMS_OUTPUT.PUT_LINE(v_ketqua);
+END;
