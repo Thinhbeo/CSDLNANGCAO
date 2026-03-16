@@ -1,0 +1,302 @@
+create table Hang (
+    Mahang varchar2(5) primary key,
+    Tenhang varchar2(50),
+    Soluong number,
+    Giaban number
+);
+
+create table Hoadon (
+    Mahd varchar2(5) primary key,
+    Mahang varchar2(5) references Hang(Mahang),
+    Soluongban number,
+    Ngayban date
+);
+
+insert into Hang(Mahang, Tenhang, Soluong, Giaban) values ('h01', 'hang 1', 100, 10000);
+commit;
+
+create or replace trigger trg_hoadon_insert
+before insert on Hoadon
+for each row
+declare
+    v_dem number := 0;
+    v_soluong number := 0;
+begin
+
+    select count(*) into v_dem from Hang where Mahang = :new.Mahang;
+    if v_dem = 0 then
+        raise_application_error(-20001, 'Ma hang khong ton tai');
+    end if;
+
+    select Soluong into v_soluong from Hang where Mahang = :new.Mahang;
+    if :new.Soluongban > v_soluong then
+        raise_application_error(-20002, 'So luong khong du');
+    end if;
+
+    update Hang 
+    set Soluong = Soluong - :new.Soluongban 
+    where Mahang = :new.Mahang;
+end trg_hoadon_insert;
+
+--test trigger
+insert into Hoadon(Mahd, Mahang, Soluongban, Ngayban) values ('hd01', 'h01', 10, sysdate);
+commit; 
+insert into Hoadon(Mahd, Mahang, Soluongban, Ngayban) values ('hd02', 'h01', 200, sysdate); 
+
+
+create or replace trigger trg_hoadon_delete
+after delete on Hoadon
+for each row
+begin
+    update Hang 
+    set Soluong = Soluong + :old.Soluongban 
+    where Mahang = :old.Mahang;
+end trg_hoadon_delete;
+
+delete from Hoadon where Mahd = 'hd01';
+commit;
+
+
+create or replace trigger trg_hoadon_update
+before update on Hoadon
+for each row
+begin
+    update Hang 
+    set Soluong = Soluong - (:new.Soluongban - :old.Soluongban)
+    where Mahang = :new.Mahang;
+end trg_hoadon_update;
+/
+insert into Hoadon(Mahd, Mahang, Soluongban, Ngayban) values ('hd03', 'h01', 20, sysdate);
+commit;
+update Hoadon set Soluongban = 30 where Mahd = 'hd03';
+commit; 
+
+CREATE TABLE Mathang (
+Mahang VARCHAR2(5) CONSTRAINT pk_mathang PRIMARY KEY,
+Tenhang VARCHAR2(50) NOT NULL,
+Soluong NUMBER(10)
+);
+
+CREATE TABLE Nhatkybanhang (
+Stt NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+Ngay DATE,
+Nguoimua VARCHAR2(50),
+Mahang VARCHAR2(5) REFERENCES Mathang(Mahang),
+Soluong NUMBER(10),
+Giaban NUMBER(15,2)
+);
+-- Dữ liệu mẫu Mathang
+INSERT INTO Mathang VALUES ('1','Hang A', 100);
+INSERT INTO Mathang VALUES ('2','Hang B', 200);
+INSERT INTO Mathang VALUES ('3','Hang C', 150);
+COMMIT;
+
+create or replace package pkg_state as
+    g_row_count number := 0;
+end pkg_state;
+
+
+create or replace trigger trg_nhatkybanhang_insert
+after insert on NHATKYBANHANG
+for each row
+begin
+    update MATHANG 
+    set Soluong = Soluong - :new.Soluong 
+    where Mahang = :new.Mahang;
+end;
+/
+
+-- test:
+insert into NHATKYBANHANG(Ngay, Nguoimua, Mahang, Soluong, Giaban) 
+values (sysdate, 'khach a', '1', 10, 50000);
+commit;
+/
+
+
+create or replace trigger trg_nhatkybanhang_update_soluong
+after update of SOLUONG on NHATKYBANHANG
+for each row
+begin
+    update MATHANG 
+    set Soluong = Soluong - (:new.Soluong - :old.Soluong)
+    where Mahang = :new.Mahang;
+end;
+/
+
+-- test:
+update NHATKYBANHANG 
+set SOLUONG = 15 
+where Stt = 1;
+commit;
+
+
+create or replace trigger trg_nkbh_insert_kiemtra
+before insert on NHATKYBANHANG
+for each row
+declare
+    v_tonkho number;
+begin
+    select Soluong into v_tonkho from MATHANG where Mahang = :new.Mahang;
+    
+    if :new.Soluong > v_tonkho then
+        raise_application_error(-20001, 'lỗi: số lượng bán lớn hơn tồn kho');
+    else
+        update MATHANG 
+        set Soluong = Soluong - :new.Soluong 
+        where Mahang = :new.Mahang;
+    end if;
+end;
+/
+
+-- test:
+
+insert into NHATKYBANHANG(Ngay, Nguoimua, Mahang, Soluong, Giaban) 
+values (sysdate, 'khach b', '1', 5, 50000);
+commit;
+
+
+insert into NHATKYBANHANG(Ngay, Nguoimua, Mahang, Soluong, Giaban) 
+values (sysdate, 'khach c', '1', 500, 50000);
+
+
+create or replace trigger trg_nkbh_update_compound
+for update on NHATKYBANHANG
+compound trigger
+    v_dem number := 0;
+
+    before statement is 
+    begin
+        v_dem := 0;
+    end before statement;
+
+    after each row is 
+    begin
+        v_dem := v_dem + 1;
+        update MATHANG 
+        set Soluong = Soluong - (:new.Soluong - :old.Soluong) 
+        where Mahang = :new.Mahang;
+    end after each row;
+
+    after statement is 
+    begin
+        if v_dem > 1 then
+            raise_application_error(-20002, 'loi');
+        end if;
+    end after statement;
+end;
+/
+
+-- test:
+
+update NHATKYBANHANG set SOLUONG = 20 where Stt = 1;
+commit;
+
+update NHATKYBANHANG set SOLUONG = SOLUONG + 1;
+
+create or replace trigger trg_nkbh_delete_compound
+for delete on NHATKYBANHANG
+compound trigger
+    v_dem number := 0;
+
+    before statement is 
+    begin
+        v_dem := 0;
+    end before statement;
+
+    after each row is 
+    begin
+        v_dem := v_dem + 1;
+        update MATHANG 
+        set Soluong = Soluong + :old.Soluong 
+        where Mahang = :old.Mahang;
+    end after each row;
+
+    after statement is 
+    begin
+        if v_dem > 1 then
+            raise_application_error(-20003, 'lỗi');
+        end if;
+    end after statement;
+end;
+
+delete from NHATKYBANHANG 
+where Mahang = 'm1' and Soluong = 10;
+commit;
+
+create or replace trigger trg_nkbh_update_nangcao
+for update on NHATKYBANHANG
+compound trigger
+    v_dem number := 0;
+
+    before statement is 
+    begin
+        v_dem := 0;
+    end before statement;
+
+    after each row is 
+    declare
+        v_tonkho number;
+    begin
+        v_dem := v_dem + 1;
+        select Soluong into v_tonkho from MATHANG where Mahang = :new.Mahang;
+
+        if :new.Soluong < v_tonkho then
+            raise_application_error(-20004, 'lỗi sai cập nhật: số lượng cập nhật < tồn kho');
+        elsif :new.Soluong = v_tonkho then
+            dbms_output.put_line('thông báo: không cần cập nhật');
+        else
+            update MATHANG 
+            set Soluong = Soluong - (:new.Soluong - :old.Soluong) 
+            where Mahang = :new.Mahang;
+        end if;
+    end after each row;
+
+    after statement is 
+    begin
+        if v_dem > 1 then
+            raise_application_error(-20005, 'lỗi: update > 1 bản ghi');
+        end if;
+    end after statement;
+end;
+/
+
+-- test
+update NHATKYBANHANG set SOLUONG = 1 where Stt = 2;
+
+create or replace procedure proc_xoa_mathang (p_mahang in varchar2)
+is
+    v_kiemtra number;
+begin
+    select count(*) into v_kiemtra from MATHANG where Mahang = p_mahang;
+    
+    if v_kiemtra = 0 then
+        dbms_output.put_line('ma hang khong ton tai');
+    else
+        delete from NHATKYBANHANG where Mahang = p_mahang;
+        delete from MATHANG where Mahang = p_mahang;
+        dbms_output.put_line('xoa dl thanh cong trong 2 bang');
+        commit;
+    end if;
+end;
+/
+
+-- test:
+set serveroutput on;
+execute proc_xoa_mathang('3');
+
+create or replace function fn_tongtien (p_tenhang in varchar2)
+return number
+is
+    v_tongtien number := 0;
+begin
+    select coalesce(sum(nk.Soluong * nk.Giaban), 0) into v_tongtien
+    from NHATKYBANHANG nk
+    join MATHANG mh on nk.Mahang = mh.Mahang
+    where mh.Tenhang = p_tenhang;
+    
+    return v_tongtien;
+end;
+/
+
+-- test:
+select fn_tongtien('hang a') as tong_tien from dual;
