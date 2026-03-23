@@ -1,0 +1,390 @@
+
+CREATE TABLE HangSX (
+    MaHangSX VARCHAR2(10) PRIMARY KEY,
+    TenHang VARCHAR2(50),
+    DiaChi VARCHAR2(100),
+    SoDT VARCHAR2(15),
+    Email VARCHAR2(50)
+);
+
+CREATE TABLE SanPham (
+    MaSP VARCHAR2(10) PRIMARY KEY,
+    MaHangSX VARCHAR2(10) REFERENCES HangSX(MaHangSX),
+    TenSP VARCHAR2(50),
+    SoLuong NUMBER DEFAULT 0,
+    MauSac VARCHAR2(20),
+    GiaBan NUMBER,
+    DonViTinh VARCHAR2(10),
+    MoTa VARCHAR2(200)
+);
+
+CREATE TABLE Nhap (
+    SoHDN VARCHAR2(10),
+    MaSP VARCHAR2(10) REFERENCES SanPham(MaSP),
+    SoLuongN NUMBER,
+    DonGiaN NUMBER,
+    CONSTRAINT PK_Nhap PRIMARY KEY (SoHDN, MaSP)
+);
+
+CREATE TABLE Xuat (
+    SoHDX VARCHAR2(10),
+    MaSP VARCHAR2(10) REFERENCES SanPham(MaSP),
+    SoLuongX NUMBER,
+    CONSTRAINT PK_Xuat PRIMARY KEY (SoHDX, MaSP)
+);
+
+
+
+CREATE OR REPLACE TRIGGER trg_Nhap
+BEFORE INSERT ON Nhap
+FOR EACH ROW
+DECLARE
+    v_dem NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_dem FROM SanPham WHERE MaSP = :NEW.MaSP;
+    IF v_dem = 0 THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Lỗi: Mã sản phẩm không tồn tại trong hệ thống.');
+    END IF;
+
+
+    IF :NEW.SoLuongN <= 0 OR :NEW.DonGiaN <= 0 THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Lỗi: Số lượng nhập và đơn giá phải lớn hơn 0.');
+    END IF;
+
+    UPDATE SanPham 
+    SET SoLuong = SoLuong + :NEW.SoLuongN
+    WHERE MaSP = :NEW.MaSP;
+END;
+/
+
+
+
+
+CREATE OR REPLACE TRIGGER trg_xuat
+BEFORE INSERT ON Xuat
+FOR EACH ROW
+DECLARE
+    v_tonkho NUMBER;
+    v_ton_tai NUMBER;
+BEGIN
+    SELECT COUNT(*) INTO v_ton_tai FROM SanPham WHERE MaSP = :NEW.MaSP;
+    IF v_ton_tai = 0 THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Lỗi: Mã sản phẩm không tồn tại.');
+    END IF;
+
+    SELECT SoLuong INTO v_tonkho FROM SanPham WHERE MaSP = :NEW.MaSP;
+    IF :NEW.SoLuongX > v_tonkho THEN
+        RAISE_APPLICATION_ERROR(-20004, 'Lỗi: Số lượng tồn kho không đủ để xuất.');
+    END IF;
+
+    UPDATE SanPham 
+    SET SoLuong = SoLuong - :NEW.SoLuongX
+    WHERE MaSP = :NEW.MaSP;
+END;
+/
+
+
+
+CREATE OR REPLACE TRIGGER trg_XoaXuat
+AFTER DELETE ON Xuat
+FOR EACH ROW
+BEGIN
+    UPDATE SanPham 
+    SET SoLuong = SoLuong + :OLD.SoLuongX
+    WHERE MaSP = :OLD.MaSP;
+END;
+/
+
+
+
+INSERT INTO HangSX VALUES ('H01', 'Samsung', 'Korea', '0123', 'ss@gmail.com');
+INSERT INTO SanPham (MaSP, MaHangSX, TenSP, SoLuong, GiaBan) 
+VALUES ('SP01', 'H01', 'Galaxy S23', 0, 20000000);
+COMMIT;
+INSERT INTO Nhap VALUES ('HDN01', 'SP01', 10, 15000000);
+SELECT MaSP, SoLuong FROM SanPham; 
+
+
+
+
+
+INSERT INTO Xuat VALUES ('HDX01', 'SP01', 4);
+SELECT MaSP, SoLuong FROM SanPham;
+INSERT INTO Xuat VALUES ('HDX02', 'SP01', 100); 
+
+
+
+
+
+
+
+
+DELETE FROM Xuat WHERE SoHDX = 'HDX01' AND MaSP = 'SP01';
+SELECT MaSP, SoLuong FROM SanPham; 
+
+
+
+
+CREATE OR REPLACE PACKAGE pkg_state AS
+    g_row_count NUMBER := 0;
+END pkg_state;
+/
+
+CREATE OR REPLACE TRIGGER trg_CapNhatXuat
+FOR UPDATE ON Xuat
+COMPOUND TRIGGER
+    v_tonkho NUMBER;
+    BEFORE STATEMENT IS
+    BEGIN
+        pkg_state.g_row_count := 0;
+    END BEFORE STATEMENT;
+
+    BEFORE EACH ROW IS
+    BEGIN
+        pkg_state.g_row_count := pkg_state.g_row_count + 1;
+        IF pkg_state.g_row_count > 1 THEN
+            RAISE_APPLICATION_ERROR(-20005, 'Lỗi: Chỉ được cập nhật tối đa 1 bản ghi mỗi lần.');
+        END IF;
+
+        SELECT SoLuong INTO v_tonkho FROM SanPham WHERE MaSP = :NEW.MaSP;
+        IF (v_tonkho + :OLD.SoLuongX - :NEW.SoLuongX) < 0 THEN
+            RAISE_APPLICATION_ERROR(-20006, 'Lỗi: Kho không đủ hàng để thực hiện thay đổi này.');
+        END IF;
+
+        UPDATE SanPham 
+        SET SoLuong = SoLuong - (:NEW.SoLuongX - :OLD.SoLuongX)
+        WHERE MaSP = :NEW.MaSP;
+    END BEFORE EACH ROW;
+END trg_CapNhatXuat;
+/
+
+
+UPDATE Xuat SET SoLuongX = 8 WHERE SoHDX = 'X001' AND MaSP = 'SP01';
+SELECT SoLuong FROM SanPham WHERE MaSP = 'SP01';
+
+CREATE OR REPLACE TRIGGER trg_CapNhatNhap
+FOR UPDATE ON Nhap
+COMPOUND TRIGGER
+    
+    BEFORE STATEMENT IS
+    BEGIN
+        pkg_state.g_row_count := 0;
+    END BEFORE STATEMENT;
+
+    BEFORE EACH ROW IS
+    BEGIN
+        pkg_state.g_row_count := pkg_state.g_row_count + 1;
+        IF pkg_state.g_row_count > 1 THEN
+            RAISE_APPLICATION_ERROR(-20007, 'Lỗi: Chỉ được cập nhật tối đa 1 bản ghi mỗi lần.');
+        END IF;
+
+        UPDATE SanPham 
+        SET SoLuong = SoLuong + (:NEW.SoLuongN - :OLD.SoLuongN)
+        WHERE MaSP = :NEW.MaSP;
+    END BEFORE EACH ROW;
+END trg_CapNhatNhap;
+/
+
+
+UPDATE Xuat SET SoLuongX = 8 WHERE SoHDX = 'X001' AND MaSP = 'SP01';
+SELECT SoLuong FROM SanPham WHERE MaSP = 'SP01';
+
+
+
+
+
+
+
+CREATE OR REPLACE TRIGGER trg_XoaNhap
+AFTER DELETE ON Nhap
+FOR EACH ROW
+BEGIN
+    UPDATE SanPham 
+    SET SoLuong = SoLuong - :OLD.SoLuongN
+    WHERE MaSP = :OLD.MaSP;
+END;
+/
+
+
+SELECT MaSP, TenSP, SoLuong FROM SanPham WHERE MaSP = 'SP01';
+
+
+DELETE FROM Nhap WHERE SoHDN = 'HDN01' AND MaSP = 'SP01';
+SELECT SoLuong FROM SanPham WHERE MaSP = 'SP01';
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE TABLE Phong (
+    MaPhong VARCHAR2(10) PRIMARY KEY,
+    LoaiPhong VARCHAR2(50),
+    TrangThai VARCHAR2(20) CHECK (TrangThai IN ('TRONG', 'DA_THUE', 'BAO_TRI')),
+    GiaTheoGio NUMBER,
+    GiaTheoNgay NUMBER,
+    SoNguoiToiDa NUMBER
+);
+
+CREATE TABLE KhachHang (
+    MaKH VARCHAR2(10) PRIMARY KEY,
+    HoTen VARCHAR2(100),
+    CCCD VARCHAR2(20),
+    SoDT VARCHAR2(15),
+    Email VARCHAR2(50),
+    QuocTich VARCHAR2(50)
+);
+
+CREATE TABLE HoaDon (
+    MaHD VARCHAR2(10) PRIMARY KEY,
+    MaKH VARCHAR2(10) REFERENCES KhachHang(MaKH),
+    MaPhong VARCHAR2(10) REFERENCES Phong(MaPhong),
+    NgayNhan DATE,
+    NgayTra DATE,
+    SoNguoi NUMBER,
+    TongTien NUMBER DEFAULT 0,
+    TrangThai VARCHAR2(20) CHECK (TrangThai IN ('CHO_NHAN', 'DANG_O', 'DA_TRA', 'HUY'))
+);
+
+CREATE TABLE ChiPhiPhuThu (
+    MaCP VARCHAR2(10) PRIMARY KEY,
+    MaHD VARCHAR2(10) REFERENCES HoaDon(MaHD),
+    MoTa VARCHAR2(200),
+    SoTien NUMBER,
+    ThoiGian DATE
+);
+
+CREATE TABLE LichSuPhong (
+    MaLS NUMBER GENERATED BY DEFAULT AS IDENTITY PRIMARY KEY,
+    MaPhong VARCHAR2(10),
+    MaHD VARCHAR2(10),
+    NgayNhan DATE,
+    NgayTra DATE,
+    GhiChu VARCHAR2(200)
+);
+
+CREATE SEQUENCE SEQ_HD START WITH 1 INCREMENT BY 1;
+
+
+
+CREATE OR REPLACE TRIGGER trg_DatPhong
+BEFORE INSERT ON HoaDon
+FOR EACH ROW
+DECLARE
+    v_trang_thai_phong Phong.TrangThai%TYPE;
+    v_max_nguoi Phong.SoNguoiToiDa%TYPE;
+    v_gia_ngay Phong.GiaTheoNgay%TYPE;
+    v_so_ngay NUMBER;
+BEGIN
+    SELECT TrangThai, SoNguoiToiDa, GiaTheoNgay 
+    INTO v_trang_thai_phong, v_max_nguoi, v_gia_ngay
+    FROM Phong WHERE MaPhong = :NEW.MaPhong;
+
+    IF v_trang_thai_phong <> 'TRONG' THEN
+        RAISE_APPLICATION_ERROR(-20001, 'Lỗi: Phòng không ở trạng thái TRONG.');
+    END IF;
+
+    IF :NEW.SoNguoi > v_max_nguoi THEN
+        RAISE_APPLICATION_ERROR(-20002, 'Lỗi: Số người vượt quá định mức của phòng.');
+    END IF;
+
+    IF :NEW.NgayNhan < TRUNC(SYSDATE) OR :NEW.NgayNhan >= :NEW.NgayTra THEN
+        RAISE_APPLICATION_ERROR(-20003, 'Lỗi: Ngày nhận/trả không hợp lệ.');
+    END IF;
+
+    v_so_ngay := CEIL(:NEW.NgayTra - :NEW.NgayNhan);
+    :NEW.TongTien := v_so_ngay * v_gia_ngay;
+    
+    UPDATE Phong SET TrangThai = 'DA_THUE' WHERE MaPhong = :NEW.MaPhong;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_CapNhatTrangThaiHD
+BEFORE UPDATE OF TrangThai ON HoaDon
+FOR EACH ROW
+BEGIN
+    IF :OLD.TrangThai = 'CHO_NHAN' AND :NEW.TrangThai NOT IN ('DANG_O', 'HUY') THEN
+        RAISE_APPLICATION_ERROR(-20005, 'Chờ nhận chỉ được chuyển sang Đang ở hoặc Hủy.');
+    ELSIF :OLD.TrangThai = 'DANG_O' AND :NEW.TrangThai <> 'DA_TRA' THEN
+        RAISE_APPLICATION_ERROR(-20006, 'Đang ở chỉ được chuyển sang Đã trả.');
+    ELSIF :OLD.TrangThai IN ('DA_TRA', 'HUY') THEN
+        RAISE_APPLICATION_ERROR(-20007, 'Hóa đơn đã kết thúc, không thể đổi trạng thái.');
+    END IF;
+
+    IF :NEW.TrangThai IN ('DA_TRA', 'HUY') THEN
+        UPDATE Phong SET TrangThai = 'TRONG' WHERE MaPhong = :NEW.MaPhong;
+        
+        IF :NEW.TrangThai = 'DA_TRA' THEN
+            INSERT INTO LichSuPhong(MaPhong, MaHD, NgayNhan, NgayTra, GhiChu)
+            VALUES (:NEW.MaPhong, :NEW.MaHD, :NEW.NgayNhan, :NEW.NgayTra, 'Khách trả phòng bình thường');
+        END IF;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_SuaChiPhi
+FOR INSERT OR UPDATE ON ChiPhiPhuThu
+COMPOUND TRIGGER
+    TYPE t_hd_list IS TABLE OF VARCHAR2(10) INDEX BY BINARY_INTEGER;
+    v_hd_affected t_hd_list;
+    v_row_count NUMBER := 0;
+
+    BEFORE STATEMENT IS BEGIN v_row_count := 0; END BEFORE STATEMENT;
+
+    BEFORE EACH ROW IS
+    BEGIN
+        v_row_count := v_row_count + 1;
+        IF v_row_count > 5 THEN
+            RAISE_APPLICATION_ERROR(-20008, 'Chỉ được thêm/sửa tối đa 5 chi phí mỗi lần.');
+        END IF;
+        
+        IF :NEW.SoTien <= 0 OR :NEW.SoTien >= 50000000 THEN
+            RAISE_APPLICATION_ERROR(-20009, 'Số tiền phụ thu không hợp lệ.');
+        END IF;
+        
+        v_hd_affected(v_hd_affected.COUNT + 1) := :NEW.MaHD;
+    END BEFORE EACH ROW;
+
+    AFTER STATEMENT IS
+    BEGIN
+        FOR i IN 1..v_hd_affected.COUNT LOOP
+            UPDATE HoaDon h
+            SET TongTien = (
+                (CEIL(NgayTra - NgayNhan) * (SELECT GiaTheoNgay FROM Phong p WHERE p.MaPhong = h.MaPhong))
+                + (SELECT NVL(SUM(SoTien),0) FROM ChiPhiPhuThu WHERE MaHD = v_hd_affected(i))
+            )
+            WHERE MaHD = v_hd_affected(i);
+        END LOOP;
+    END AFTER STATEMENT;
+END;
+/
+
+INSERT INTO Phong VALUES ('P101', 'DELUXE', 'TRONG', 100000, 1000000, 2);
+INSERT INTO Phong VALUES ('P102', 'SUITE', 'TRONG', 200000, 2000000, 4);
+INSERT INTO KhachHang VALUES ('KH001', 'Nguyen Van A', '123456789', '0901234567', 'a@gmail.com', 'Viet Nam');
+COMMIT;
+
+
+INSERT INTO HoaDon (MaHD, MaKH, MaPhong, NgayNhan, NgayTra, SoNguoi, TrangThai)
+VALUES ('HD001', 'KH001', 'P101', TO_DATE('2026-03-25', 'YYYY-MM-DD'), TO_DATE('2026-03-27', 'YYYY-MM-DD'), 2, 'CHO_NHAN');
+
+
+SELECT MaHD, TongTien, TrangThai FROM HoaDon WHERE MaHD = 'HD001';
+
+
+SELECT MaPhong, TrangThai FROM Phong WHERE MaPhong = 'P101';
+
+
+UPDATE HoaDon SET TrangThai = 'DANG_O' WHERE MaHD = 'HD001';
+UPDATE HoaDon SET TrangThai = 'DA_TRA' WHERE MaHD = 'HD001';
+SELECT MaPhong, TrangThai FROM Phong WHERE MaPhong = 'P101';
+SELECT * FROM LichSuPhong WHERE MaHD = 'HD001';
