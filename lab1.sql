@@ -140,27 +140,6 @@ desc s_item;
 desc s_inventory;
 
 
--- ========================================================
--- 1. X”A S?CH D? LI?U C? –? TR¡NH L?I TRŸNG L?P KH”A CHÕNH
--- ========================================================
-DELETE FROM s_inventory;
-DELETE FROM s_item;
-DELETE FROM s_ord;
-DELETE FROM s_product;
-DELETE FROM s_longtext;
-DELETE FROM s_image;
-DELETE FROM s_warehouse;
-DELETE FROM s_customer;
-DELETE FROM s_emp;
-DELETE FROM s_dept;
-DELETE FROM s_title;
-DELETE FROM s_region;
-COMMIT;
-
--- ========================================================
--- 2. B’M D? LI?U CHU?N (M?i b?ng 20 d?ng, riÍng s_emp 21 d?ng)
--- ========================================================
-
 -- 1. B?NG s_region (20 d?ng)
 INSERT INTO s_region VALUES (1, 'North America'); INSERT INTO s_region VALUES (2, 'South America');
 INSERT INTO s_region VALUES (3, 'Asia');          INSERT INTO s_region VALUES (4, 'Europe');
@@ -174,20 +153,20 @@ INSERT INTO s_region VALUES (17, 'Central Asia'); INSERT INTO s_region VALUES (1
 INSERT INTO s_region VALUES (19, 'North Africa'); INSERT INTO s_region VALUES (20, 'Sub-Saharan Africa');
 
 -- 2. B?NG s_title (20 d?ng)
-INSERT INTO s_title VALUES ('Gi·m ?c');      INSERT INTO s_title VALUES ('Tr˝?ng ph?ng');
-INSERT INTO s_title VALUES ('Nh‚n viÍn');     INSERT INTO s_title VALUES ('B·n h‡ng');
-INSERT INTO s_title VALUES ('K? to·n');       INSERT INTO s_title VALUES ('Nh‚n s?');
+INSERT INTO s_title VALUES ('Gi√°m √∞?c');      INSERT INTO s_title VALUES ('Tr√Ω?ng ph?ng');
+INSERT INTO s_title VALUES ('Nh√¢n vi√™n');     INSERT INTO s_title VALUES ('B√°n h√†ng');
+INSERT INTO s_title VALUES ('K? to√°n');       INSERT INTO s_title VALUES ('Nh√¢n s?');
 INSERT INTO s_title VALUES ('K? thu?t');      INSERT INTO s_title VALUES ('B?o v?');
-INSERT INTO s_title VALUES ('Lao cÙng');      INSERT INTO s_title VALUES ('Th˝ k?');
+INSERT INTO s_title VALUES ('Lao c√¥ng');      INSERT INTO s_title VALUES ('Th√Ω k?');
 INSERT INTO s_title VALUES ('Tr? l?');        INSERT INTO s_title VALUES ('Th?c t?p sinh');
-INSERT INTO s_title VALUES ('C?ng t·c viÍn'); INSERT INTO s_title VALUES ('PhÛ G–');
-INSERT INTO s_title VALUES ('T? tr˝?ng');     INSERT INTO s_title VALUES ('T? phÛ');
-INSERT INTO s_title VALUES ('ChuyÍn viÍn');   INSERT INTO s_title VALUES ('Th? kho');
-INSERT INTO s_title VALUES ('L? t‚n');        INSERT INTO s_title VALUES ('T‡i x?');
+INSERT INTO s_title VALUES ('C?ng t√°c vi√™n'); INSERT INTO s_title VALUES ('Ph√≥ G√ê');
+INSERT INTO s_title VALUES ('T? tr√Ω?ng');     INSERT INTO s_title VALUES ('T? ph√≥');
+INSERT INTO s_title VALUES ('Chuy√™n vi√™n');   INSERT INTO s_title VALUES ('Th? kho');
+INSERT INTO s_title VALUES ('L? t√¢n');        INSERT INTO s_title VALUES ('T√†i x?');
 
--- 3. B?NG s_dept (20 d?ng - –?m b?o cÛ ph?ng 10, 31, 42, 50)
-INSERT INTO s_dept VALUES (10, 'T‡i chÌnh', 1); INSERT INTO s_dept VALUES (31, 'Kinh doanh', 2);
-INSERT INTO s_dept VALUES (42, 'Nh‚n s?', 3);   INSERT INTO s_dept VALUES (50, 'K? thu?t', 4);
+-- 3. B?NG s_dept (20 d?ng - √ê?m b?o c√≥ ph?ng 10, 31, 42, 50)
+INSERT INTO s_dept VALUES (10, 'T√†i ch√≠nh', 1); INSERT INTO s_dept VALUES (31, 'Kinh doanh', 2);
+INSERT INTO s_dept VALUES (42, 'Nh√¢n s?', 3);   INSERT INTO s_dept VALUES (50, 'K? thu?t', 4);
 INSERT INTO s_dept VALUES (1, 'Ph?ng 1', 1);    INSERT INTO s_dept VALUES (2, 'Ph?ng 2', 2);
 INSERT INTO s_dept VALUES (3, 'Ph?ng 3', 3);    INSERT INTO s_dept VALUES (4, 'Ph?ng 4', 4);
 INSERT INTO s_dept VALUES (5, 'Ph?ng 5', 5);    INSERT INTO s_dept VALUES (6, 'Ph?ng 6', 6);
@@ -197,31 +176,31 @@ INSERT INTO s_dept VALUES (12, 'Ph?ng 12', 11); INSERT INTO s_dept VALUES (13, '
 INSERT INTO s_dept VALUES (14, 'Ph?ng 14', 13); INSERT INTO s_dept VALUES (15, 'Ph?ng 15', 14);
 INSERT INTO s_dept VALUES (16, 'Ph?ng 16', 15); INSERT INTO s_dept VALUES (17, 'Ph?ng 17', 16);
 
--- 4. B?NG s_emp (21 d?ng ? ?m b?o S?p s? 1 cÛ ? 20 lÌnh)
--- Lan l˝ıng r?t cao ? kÈo TB lÍn, ng˝?i cÛ ch? S l˝ıng 1400...
-INSERT INTO s_emp VALUES (1, 'Nguyen', 'Toan', 'ntoan', TO_DATE('01/01/1989', 'DD/MM/YYYY'), NULL, NULL, 'Gi·m ?c', 10, 8000, NULL);
-INSERT INTO s_emp VALUES (2, 'Tran', 'Lan', 'tlan', TO_DATE('15/05/1990', 'DD/MM/YYYY'), 'TÍn L, l˝ıng > TB', 1, 'Tr˝?ng ph?ng', 31, 6000, NULL);
-INSERT INTO s_emp VALUES (3, 'Le', 'Son', 'lson', TO_DATE('14/05/1990', 'DD/MM/YYYY'), 'TÍn S, thuÍ 14/5/90', 1, 'Nh‚n viÍn', 50, 1400, NULL);
-INSERT INTO s_emp VALUES (4, 'Pham', 'San', 'psan', TO_DATE('26/05/1991', 'DD/MM/YYYY'), 'TÍn S, thuÍ 26/5/91', 1, 'B·n h‡ng', 42, 1500, 10);
-INSERT INTO s_emp VALUES (5, 'Hoang', 'Mai', 'hmai', TO_DATE('10/10/1991', 'DD/MM/YYYY'), 'ThuÍ n„m 1991', 1, 'Nh‚n viÍn', 31, 1600, NULL);
-INSERT INTO s_emp VALUES (6, 'Vu', 'Binh', 'vbinh', TO_DATE('01/01/1995', 'DD/MM/YYYY'), 'C˘ng ph?ng Lan', 1, 'B·n h‡ng', 31, 1200, NULL);
-INSERT INTO s_emp VALUES (7, 'Do', 'A', 'da', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (8, 'Do', 'B', 'db', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (9, 'Do', 'C', 'dc', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (10, 'Do', 'D', 'dd', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (11, 'Do', 'E', 'de', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (12, 'Do', 'F', 'df', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (13, 'Do', 'G', 'dg', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (14, 'Do', 'H', 'dh', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (15, 'Do', 'I', 'di', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (16, 'Do', 'J', 'dj', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (17, 'Do', 'K', 'dk', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (18, 'Do', 'L', 'dl', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (19, 'Do', 'M', 'dm', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (20, 'Do', 'N', 'dn', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
-INSERT INTO s_emp VALUES (21, 'Do', 'O', 'do', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh‚n viÍn', 10, 1000, NULL);
+-- 4. B?NG s_emp (21 d?ng √∞? √∞?m b?o S?p s? 1 c√≥ √∞? 20 l√≠nh)
+-- Lan l√Ω√µng r?t cao √∞? k√©o TB l√™n, ng√Ω?i c√≥ ch? S l√Ω√µng 1400...
+INSERT INTO s_emp VALUES (1, 'Nguyen', 'Toan', 'ntoan', TO_DATE('01/01/1989', 'DD/MM/YYYY'), NULL, NULL, 'Gi√°m √∞?c', 10, 8000, NULL);
+INSERT INTO s_emp VALUES (2, 'Tran', 'Lan', 'tlan', TO_DATE('15/05/1990', 'DD/MM/YYYY'), 'T√™n L, l√Ω√µng > TB', 1, 'Tr√Ω?ng ph?ng', 31, 6000, NULL);
+INSERT INTO s_emp VALUES (3, 'Le', 'Son', 'lson', TO_DATE('14/05/1990', 'DD/MM/YYYY'), 'T√™n S, thu√™ 14/5/90', 1, 'Nh√¢n vi√™n', 50, 1400, NULL);
+INSERT INTO s_emp VALUES (4, 'Pham', 'San', 'psan', TO_DATE('26/05/1991', 'DD/MM/YYYY'), 'T√™n S, thu√™ 26/5/91', 1, 'B√°n h√†ng', 42, 1500, 10);
+INSERT INTO s_emp VALUES (5, 'Hoang', 'Mai', 'hmai', TO_DATE('10/10/1991', 'DD/MM/YYYY'), 'Thu√™ n√£m 1991', 1, 'Nh√¢n vi√™n', 31, 1600, NULL);
+INSERT INTO s_emp VALUES (6, 'Vu', 'Binh', 'vbinh', TO_DATE('01/01/1995', 'DD/MM/YYYY'), 'C√πng ph?ng Lan', 1, 'B√°n h√†ng', 31, 1200, NULL);
+INSERT INTO s_emp VALUES (7, 'Do', 'A', 'da', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (8, 'Do', 'B', 'db', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (9, 'Do', 'C', 'dc', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (10, 'Do', 'D', 'dd', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (11, 'Do', 'E', 'de', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (12, 'Do', 'F', 'df', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (13, 'Do', 'G', 'dg', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (14, 'Do', 'H', 'dh', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (15, 'Do', 'I', 'di', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (16, 'Do', 'J', 'dj', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (17, 'Do', 'K', 'dk', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (18, 'Do', 'L', 'dl', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (19, 'Do', 'M', 'dm', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (20, 'Do', 'N', 'dn', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
+INSERT INTO s_emp VALUES (21, 'Do', 'O', 'do', TO_DATE('01/01/1996', 'DD/MM/YYYY'), NULL, 1, 'Nh√¢n vi√™n', 10, 1000, NULL);
 
--- 5. B?NG s_customer (20 d?ng - KH 16-20 c? t?nh khÙng cÛ ın h‡ng)
+-- 5. B?NG s_customer (20 d?ng - KH 16-20 c? t?nh kh√¥ng c√≥ √∞√µn h√†ng)
 INSERT INTO s_customer VALUES (1, 'Cong ty A', '0901', 'HCM', 'HCM', 'HCM', 'VN', '70000', 'Good', 4, 1, NULL);
 INSERT INTO s_customer VALUES (2, 'Cong ty B', '0902', 'HN', 'HN', 'HN', 'VN', '10000', 'Good', 4, 2, NULL);
 INSERT INTO s_customer VALUES (3, 'Cong ty C', '0903', 'DN', 'DN', 'DN', 'VN', '50000', 'Fair', 4, 3, NULL);
@@ -312,7 +291,7 @@ INSERT INTO s_product VALUES (19, 'Product 19', 'Desc 19', 19, 19, 160, 'Cai');
 INSERT INTO s_product VALUES (20, 'Product 20', 'Desc 20', 20, 20, 170, 'Cai');
 
 -- 10. B?NG s_ord (20 d?ng)
--- –ın 101 t?ng > 100k. KH 1 cÛ nhi?u ın nh?t. KH 2 cÛ t?ng ti?n l?n nh?t.
+-- √ê√µn 101 t?ng > 100k. KH 1 c√≥ nhi?u √∞√µn nh?t. KH 2 c√≥ t?ng ti?n l?n nh?t.
 INSERT INTO s_ord VALUES (101, 1, TO_DATE('01/01/2026', 'DD/MM/YYYY'), TO_DATE('05/01/2026', 'DD/MM/YYYY'), 4, 150000, 'Credit', 'Y');
 INSERT INTO s_ord VALUES (102, 1, TO_DATE('02/01/2026', 'DD/MM/YYYY'), NULL, 4, 1500, 'Cash', 'N');
 INSERT INTO s_ord VALUES (103, 1, TO_DATE('03/01/2026', 'DD/MM/YYYY'), NULL, 4, 2000, 'Cash', 'N');
