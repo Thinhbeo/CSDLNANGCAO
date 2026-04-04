@@ -140,27 +140,6 @@ desc s_item;
 desc s_inventory;
 
 
--- ========================================================
--- 1. XÓA SẠCH DỮ LIỆU CŨ ĐỂ TRÁNH LỖI TRÙNG LẶP KHÓA CHÍNH
--- ========================================================
-DELETE FROM s_inventory;
-DELETE FROM s_item;
-DELETE FROM s_ord;
-DELETE FROM s_product;
-DELETE FROM s_longtext;
-DELETE FROM s_image;
-DELETE FROM s_warehouse;
-DELETE FROM s_customer;
-DELETE FROM s_emp;
-DELETE FROM s_dept;
-DELETE FROM s_title;
-DELETE FROM s_region;
-COMMIT;
-
--- ========================================================
--- 2. BƠM DỮ LIỆU CHUẨN (Mỗi bảng 20 dòng, riêng s_emp 21 dòng)
--- ========================================================
-
 -- 1. BẢNG s_region (20 dòng)
 INSERT INTO s_region VALUES (1, 'North America'); INSERT INTO s_region VALUES (2, 'South America');
 INSERT INTO s_region VALUES (3, 'Asia');          INSERT INTO s_region VALUES (4, 'Europe');
@@ -369,8 +348,6 @@ INSERT INTO s_inventory VALUES (19, 19, 100, 20, 500, NULL, TO_DATE('19/01/2026'
 INSERT INTO s_inventory VALUES (20, 20, 10000, 2000, 50000, NULL, TO_DATE('20/01/2026', 'DD/MM/YYYY'));
 
 COMMIT;
-
-
 
 
 SELECT name AS "Ten khach hang",
